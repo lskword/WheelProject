@@ -78,6 +78,7 @@
         }
       }
     },
+    /*放大镜*/
     zoom: function (bigImgPath) {
       var oSmallPic = document.querySelector('#smallPic');
       var oBigPic = document.querySelector('#bigPic');
@@ -161,10 +162,85 @@
         return allLeft;
       }
 
+    },
+    /*原生ajax请求数据*/
+    ajax: function (obj) {
+      var url = obj.url,
+          data = obj.data,
+          dataType = obj.dataType,
+          type = obj.type,
+          suc = obj.suc,
+          xhr
+      if (window.XMLHttpRequest) {
+        xhr = new XMLHttpRequest()
+      } else {
+        xhr = new ActiveXObject('Microsoft.XMLHTTP')
+      }
+      if (type === 'POST') {
+        xhr.open(type, url, true)
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded')
+        xhr.send(getStr(data))
+      } else {
+        xhr.open(type, url + "?" + getStr(data))
+        xhr.send()
+      }
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState == xhr.DONE) {
+          if (xhr.status >= 200 && xhr.status < 300 || xhr.status === 304) {
+            if (dataType === 'json') {
+              if (typeof suc === 'function') {
+                suc(JSON.parse(xhr.responseText))
+              }
+            }
+          }
+        }
+      }
+      function getStr(data) {
+        var getStr =[]
+        for (var k in data) {
+          getStr.push(k + '=' + encodeURIComponent(data[k]))
+        }
+        return getStr.join('&')
+      }
+    },
+    /*懒加载*/
+    lazyload: function() {
+      var oImg = document.querySelectorAll('img')
+      var oImg_sum = 0 //当前加载到的位置，避免从第一张图片开始遍历
+      let W_height = document.documentElement.clientHeight ||
+        document.body.clientHeight
+      let oScrollTop = document.documentElement.scrollTop ||
+        document.body.scrollTop
+      time(oImg, oImg_sum, W_height, oScrollTop)
+      window.onscroll = function() {
+        let oScrollTop = document.documentElement.scrollTop ||
+          document.body.scrollTop
+          lsk.lazyload.call(this, oImg, oImg_sum, W_height, oScrollTop)
+      }
+      function time (oImg, oImg_sum, W_height, oScrollTop) {
+        for (var i = oImg_sum; i < oImg.length; i++) {
+          (function(i) {
+            function getAllTop(dom) {
+              var scrollTop = dom.scrollTop
+              while (dom = dom.offsetParent) {
+                scrollTop += dom.offsetParent
+              }
+              return scrollTop
+            }
+            if (oImg[i].offsetTop < W_height + oScrollTop) {
+              if (oImg[i].getAttribute('src') === '') {
+                oImg[i].src = oImg[i].getAttribute('guoyu-src')
+              }
+              oImg_sum = i + 1
+            }
+          }(i));
+        }
+      }
     }
-
   }
   window.lsk = lsk
+  lsk.author = 'lskword'
+  lsk.version = '1.1.2'
 })()
 
 //面向对象轮子
